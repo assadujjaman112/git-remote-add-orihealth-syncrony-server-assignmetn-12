@@ -42,17 +42,34 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/users", async(req, res) => {
+    app.patch("/users/:email", async (req, res) => {
+      const user = req.body;
+      const email = req.params.email;
+      const filter = { email: email };
+      const updatedUser = {
+        $set: {
+          name: user.name,
+          bloodGroup: user.bloodGroup,
+          district: user.district,
+          upazilla: user.upazilla,
+          image: user.image,
+        },
+      };
+      const result = await userCollection.updateOne(filter,updatedUser);
+      res.send(result)
+    });
+
+    app.get("/users", async (req, res) => {
       const result = await userCollection.find().toArray();
       res.send(result);
-    })
+    });
 
-    app.get("/users/:email", async(req, res) => {
+    app.get("/users/:email", async (req, res) => {
       const email = req.params.email;
-      const query = {email : email};
+      const query = { email: email };
       const result = await userCollection.findOne(query);
       res.send(result);
-    })
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
