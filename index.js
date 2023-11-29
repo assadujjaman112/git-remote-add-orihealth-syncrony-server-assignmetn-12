@@ -1,7 +1,7 @@
 const express = require("express");
 const app = express();
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 const port = process.env.PORT || 5000;
 
@@ -26,6 +26,7 @@ async function run() {
     // await client.connect();
 
     const userCollection = client.db("healthSynchronyDB").collection("users");
+    const testCollection = client.db("healthSynchronyDB").collection("tests");
 
     // User related api
     app.post("/users", async (req, res) => {
@@ -55,9 +56,43 @@ async function run() {
           image: user.image,
         },
       };
-      const result = await userCollection.updateOne(filter,updatedUser);
-      res.send(result)
     });
+
+    app.patch('/users/admin/:id', async(req, res) => {
+      const id = req.params.id;
+      const filter = {_id : new ObjectId(id)}
+      const updatedUser = {
+        $set : {
+          role : "admin" 
+        }
+      }
+      const result = await userCollection.updateOne(filter, updatedUser);
+      res.send(result);
+    })
+
+    app.patch('/users/block/:id', async(req, res) => {
+      const id = req.params.id;
+      const filter = {_id : new ObjectId(id)}
+      const updatedUser = {
+        $set : {
+          status : "blocked" 
+        }
+      }
+      const result = await userCollection.updateOne(filter, updatedUser);
+      res.send(result);
+    })
+
+    app.patch('/users/active/:id', async(req, res) => {
+      const id = req.params.id;
+      const filter = {_id : new ObjectId(id)}
+      const updatedUser = {
+        $set : {
+          status : "active" 
+        }
+      }
+      const result = await userCollection.updateOne(filter, updatedUser);
+      res.send(result);
+    })
 
     app.get("/users", async (req, res) => {
       const result = await userCollection.find().toArray();
@@ -70,6 +105,13 @@ async function run() {
       const result = await userCollection.findOne(query);
       res.send(result);
     });
+
+    // Test Related api
+    app.post("/tests", async(req, res) => {
+      const test = req.body;
+      const result = await testCollection.insertOne(test);
+      res.send(result);
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
