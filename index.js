@@ -27,6 +27,7 @@ async function run() {
 
     const userCollection = client.db("healthSynchronyDB").collection("users");
     const testCollection = client.db("healthSynchronyDB").collection("tests");
+    const bannerCollection = client.db("healthSynchronyDB").collection("banners");
 
     // User related api
     app.post("/users", async (req, res) => {
@@ -149,6 +150,18 @@ async function run() {
       const result = await testCollection.updateOne(filter, updatedTest);
       res.send(result);
     });
+
+    // Banner Related api
+    app.post("/banners", async(req, res) => {
+      const banner = req.body;
+      const result = await bannerCollection.insertOne(banner);
+      res.send(result);
+    });
+
+    app.get("/banners", async(req, res) => {
+      const result = await bannerCollection.find().toArray();
+      res.send(result);
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
