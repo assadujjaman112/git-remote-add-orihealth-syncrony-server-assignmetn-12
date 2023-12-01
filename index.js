@@ -161,6 +161,44 @@ async function run() {
     app.get("/banners", async(req, res) => {
       const result = await bannerCollection.find().toArray();
       res.send(result);
+    });
+
+    app.get("/banners/:id", async(req, res)=> {
+      const id = req.params.id;
+      const query = {_id : new ObjectId(id)};
+      const result = await bannerCollection.findOne(query);
+      res.send(result);
+    });
+
+    app.delete("/banners/:id", async(req, res)=> {
+      const id = req.params.id;
+      const query = {_id : new ObjectId(id)};
+      const result = await bannerCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    app.patch("/banners/:id", async(req, res ) => {
+      const id = req.params.id;
+      const filter = {_id : new ObjectId(id)};
+      const updatedBanner = {
+        $set : {
+          isActive : true
+        }
+      }
+      const result = await bannerCollection.updateOne(filter, updatedBanner);
+      res.send(result);
+    })
+
+    app.patch("/banners/block/:id", async(req, res ) => {
+      const id = req.params.id;
+      const filter = {_id : new ObjectId(id)};
+      const updatedBanner = {
+        $set : {
+          isActive : false
+        }
+      }
+      const result = await bannerCollection.updateOne(filter, updatedBanner);
+      res.send(result);
     })
 
     // Send a ping to confirm a successful connection
