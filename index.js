@@ -99,6 +99,7 @@ async function run() {
 
     app.get("/users", async (req, res) => {
       const result = await userCollection.find().toArray();
+      console.log(result)
       res.send(result);
     });
 
@@ -109,6 +110,17 @@ async function run() {
       res.send(result);
     });
 
+    app.get('/users/admin/:email', async(req, res)=>{
+      const email = req.params.email;
+      const query = {email: email};
+      const user = await userCollection.findOne(query);
+      let admin = false;
+      if(user){
+        admin = user?.role === "admin";
+      }
+      res.send({admin})
+    })
+
     // Test Related api
     app.post("/tests", async (req, res) => {
       const test = req.body;
@@ -117,6 +129,7 @@ async function run() {
     });
 
     app.get("/tests", async (req, res) => {
+const today  = new Date();
       const result = await testCollection.find().toArray();
       res.send(result);
     });
@@ -230,13 +243,24 @@ async function run() {
       res.send(result);
     })
 
+    app.get("/bookings/:id", async(req, res)=> {
+      const id = req.params.id;
+      const query = {_id : new ObjectId(id)};
+      const result = await bookingCollection.findOne(query);
+      res.send();
+    })
+
+    app.delete('/bookings/:id', async(req, res)=>{
+      const id = req.params.id;
+      const query = {_id : new ObjectId(id)};
+      const result = await bookingCollection.deleteOne(query);
+      res.send(result);
+    })
+
     // Payment Intent
     app.post("/create-payment-intent", async(req, res)=> {
       const {price} = req.body;
       const amount = parseInt(price * 100);
-
-
-      console.log(amount, "amount inside");
 
       const paymentIntent = await stripe.paymentIntents.create({
         amount : amount,
