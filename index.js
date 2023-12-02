@@ -3,6 +3,7 @@ const app = express();
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); 
 const port = process.env.PORT || 5000;
 
 // Middlewares
@@ -28,6 +29,7 @@ async function run() {
     const userCollection = client.db("healthSynchronyDB").collection("users");
     const testCollection = client.db("healthSynchronyDB").collection("tests");
     const bannerCollection = client.db("healthSynchronyDB").collection("banners");
+    const bookingCollection = client.db("healthSynchronyDB").collection("bookings");
 
     // User related api
     app.post("/users", async (req, res) => {
@@ -151,6 +153,22 @@ async function run() {
       res.send(result);
     });
 
+    app.patch('/tests/bookings/:id', async(req, res)=> {
+      const test = req.body;
+      const id = req.params.id;
+      const filter = { _id : new ObjectId(id)};
+      console.log(test)
+      const updatedTest = {
+        $set : {
+          slots : test.slots,
+          reservations : test.reservations
+        }
+      }
+      const result = await testCollection.updateOne(filter, updatedTest);
+      res.send(updatedTest)
+
+    })
+
     // Banner Related api
     app.post("/banners", async(req, res) => {
       const banner = req.body;
@@ -200,6 +218,39 @@ async function run() {
       const result = await bannerCollection.updateOne(filter, updatedBanner);
       res.send(result);
     })
+
+    // Bookings related api
+    app.post('/bookings', async(req, res)=> {
+      const booking = req.body;
+      const result = await bookingCollection.insertOne(booking);
+      res.send(result);
+    })
+    app.get("/bookings", async(req, res)=> {
+      const result = await bookingCollection.find().toArray();
+      res.send(result);
+    })
+
+    // Payment Intent
+    app.post("/create-payment-intent", async(req, res)=> {
+      const {price} = req.body;
+      const amount = parseInt(price * 100);
+
+
+      console.log(amount, "amount inside");
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount : amount,
+        currency : "usd",
+        payment_method_types : ["card"]
+      });
+
+      res.send({
+        clientSecret : paymentIntent.client_secret,
+      })
+    });
+
+    
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
